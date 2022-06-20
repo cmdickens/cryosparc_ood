@@ -1,0 +1,37 @@
+<%-
+ csrftoken="MYTOKEN"
+-%>
+<script defer src="https://use.fontawesome.com/releases/v5.8.2/js/brands.js" integrity="sha384-GtvEzzhN52RvAD7CnSR7TcPw555abR8NK28tAqa/GgIDk59o0TsaK6FHglLstzCf" crossorigin="anonymous"></script>
+<script defer src="https://use.fontawesome.com/releases/v5.8.2/js/fontawesome.js" integrity="sha384-Ia7KZbX22R7DDSbxNmxHqPQ15ceNzg2U4h5A8dy3K47G2fV1k658BTxXjp7rdhXa" crossorigin="anonymous"></script>
+<script>
+  var hostButton=$( "a.btn.btn-primary.btn-sm.fas.fa-terminal" );
+  var hostname=hostButton.text();
+  hostButton.replaceWith(hostname);
+  document.cookie = "csrf-token=<%= csrftoken %>; path=/rnode/<%= host %>/<%= port %>/; secure";
+</script>
+<form action="/rnode/<%= host %>/<%= port %>/auth-do-sign-in" method="post" target="_blank">
+  <input type="hidden" name="username" value="<%= ENV["USER"] %>"/>
+  <input type="hidden" name="password" value="<%= password %>"/>
+  <input type="hidden" name="staySignedIn" value="1"/>
+  <input type="hidden" name="appUri" value=""/>
+  <input id="csrfToken" type="hidden" name="csrf-token" value="<%= csrftoken %>"/>
+  <h1>
+    <img src="https://hprc.tamu.edu/Images/galaxy/cryosparc_logo.png" height=50 width=49>&nbsp;cryoSPARC is running
+  </h1>
+   <hr>
+   Use the following username and password to login to cryoSPARC and cryoSPARC Live
+<pre>cryoadmin@tamu.edu
+admin</pre>
+   <hr>
+   <b>Connect to cryoSPARC</b><br>
+   1) Run the following on your local computer's command line to create an ssh tunnel to cryoSPARC<br>
+  <pre>ssh -N -L 39000:<%= host %>:39000 <%= ENV["USER"] %>@grace.hprc.tamu.edu</pre>
+   2) Use your desktop's browser with the URL <a href="http://localhost:39000" target="_blank">localhost:39000</a> to connect to cryoSPARC<br>
+   You may have to refresh your browser multiple times until cryoSPARC is fully launched which can take up to 5 minutes.
+   <hr>
+   <b>Connect to cryoSPARC Live</b><br>
+   1) Run the following on your local computer's command line to create an ssh tunnel to cryoSPARC Live<br>
+  <pre>ssh -N -L 39006:<%= host %>:39006 <%= ENV["USER"] %>@grace.hprc.tamu.edu</pre>
+   2) Use your desktop's browser with the URL <a href="http://localhost:39006" target="_blank">localhost:39006</a> to connect to cryoSPARC Live<br>
+   You may have to refresh your browser multiple times until cryoSPARC is fully launched which can take up to 5 minutes.
+</form>

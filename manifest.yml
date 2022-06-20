@@ -1,0 +1,8 @@
+---
+name: cryoSPARC
+category: Interactive Apps
+subcategory: Servers
+role: batch_connect
+description: |
+  This app will launch cryoSPARC and cryoSPARC Live on one compute node
+

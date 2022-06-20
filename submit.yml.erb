@@ -1,0 +1,39 @@
+---
+batch_connect:
+  template: "vnc"
+
+#"--gres",            "gpu:a100:  gt %= num_gpu.to_i %>" ,
+# Slurm has to be done with the "native" interface for now
+script:
+  native: [
+            "--ntasks-per-node", "<%= bc_num_cores.to_i %>",
+            "--mem",             "<%= bc_amt_mem.to_i %>G" ,
+            "--nodes",           "<%= bc_num_slots.to_i %>",
+            <%- if node_type.eql? "A100" -%>
+              "--ntasks-per-node", "<%= bc_num_cores.to_i %>",
+              "--mem",             "<%= bc_amt_mem.to_i %>G" ,
+              "--gres", "gpu:a100:2",
+              "--exclusive",
+            <%- elsif node_type.eql? "RTX" -%>
+              "--ntasks-per-node", "<%= bc_num_cores.to_i %>",
+              "--mem",             "<%= bc_amt_mem.to_i %>G" ,
+              "--gres", "gpu:rtx:2",
+              "--exclusive",
+            <%- elsif node_type.eql? "T4" -%>
+              "--ntasks-per-node", "<%= bc_num_cores.to_i %>",
+              "--mem",             "<%= bc_amt_mem.to_i %>G" ,
+              "--gres", "gpu:t4:4",
+              "--exclusive",
+            <%- elsif node_type.eql? "CPUhalf" -%>
+              "--ntasks-per-node", "25",
+              "--mem",             "180G" ,
+            <%- elsif node_type.eql? "CPUall" -%>
+              "--ntasks-per-node", "48",
+              "--mem",             "360G" ,
+              "--exclusive",
+            <%- end -%>
+            <% if ! bc_account.blank? then %>
+            "--account",         "<%= bc_account.strip() %>",
+            <% end %>
+          ]
+

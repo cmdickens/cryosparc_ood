@@ -1,0 +1,64 @@
+<%
+app_name = "cryosparc"
+app_root = "/var/www/ood/apps/dev/myusername/gateway"+"/"+app_name
+%>
+---
+cluster: grace
+title:   cryoSPARC
+
+attributes:
+  bc_vnc_idle: 0
+  bc_num_slots: 1
+  bc_num_hours: 
+    widget: "number_field"
+    label: "Number of Hours"
+    value: 1
+    min: 1
+    max: 96 
+    step: 1
+    help: "Make sure you select enough hours to cover your processing time. Max walltime for GPU queue is 96 hrs."
+  bc_num_cores: 48
+  bc_amt_mem: 360
+  bc_account:
+    label: "Slurm account (optional)"
+    help: "This field is needed ONLY IF you want to use a different account other than your default account. Leave it blank if you don't know what to provide."
+
+  cryosparc_license_id:
+    required: true
+    widget: "text_field"
+    label:  "cryoSPARC license id (required)"
+    value:  ""
+    help: |
+      - You must get an individual license id from <a href='https://cryosparc.com/download' target='_blank'>cryosparc.com</a>
+      - After you click the blue Launch button below, the instructions for connecting to cryoSPARC will be displayed on the next page once the cryoSPARC startup is complete which can take up to 5 minutes
+      - You can only launch one cryoSPARC portal app job but you can run multiple computational jobs within cryoSPARC
+  node_type:
+    widget: select
+    label: "GPU type and count"
+    options:
+      - [ "A100 x 2", "A100" ]
+      - [ "RTX 6000 x 2", "RTX" ]
+      - [ "T4 x 4", "T4" ]
+      - [ "CPU only", "CPUall" ]
+    help: |
+      - All options have 48 cores and 360GB memory for CPU processes
+      - There are 100 x A100, 9 x RTX 6000 and 8 x T4 GPU nodes available on Grace.<br>
+      - Each A100 and RTX 6000 GPU has 40GB memory and each T4 GPU has 16GB.
+      - Queue times can be long if the cluster is busy especially for GPU nodes.
+
+  group_dir:
+    label: "Optional group directory to mount"
+    widget: "text_field"
+    help: "Leave blank unless you know what you are doing"
+
+form:
+  - bc_vnc_idle
+  - bc_num_slots
+  - cryosparc_license_id
+  - node_type
+  - group_dir
+  - bc_num_hours
+  - bc_num_cores
+  - bc_amt_mem
+  - bc_email_on_started
+  - bc_account
