@@ -10,7 +10,7 @@ echo SLURM_JOB_GPUS: $SLURM_JOB_GPUS
 nodename=${HOSTNAME}.cluster
 # TODO edit the following two lines based on your $CRYOSPARC_SKEL directory and your .sif image
 CRYOSPARC_SKEL=/sw/cryosparc/skel
-singularity_image="$CRYOSPARC_SKEL/cryosparc_standalone_ubuntu-20.04-06092022.sif"
+singularity_image="cryosparc_standalone_ubuntu-20.04-06092022.sif"
 
 # validate license id matches format
 if [[ $(echo <%= context.cryosparc_license_id %> | grep -c '[[:alnum:]]\{8\}-[[:alnum:]]\{4\}-[[:alnum:]]\{4\}-[[:alnum:]]\{4\}-[[:alnum:]]\{12\}') == 1 ]]; then
