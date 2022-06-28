@@ -7,8 +7,8 @@ echo JOBID: $SLURM_JOBID
 echo CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES
 echo SLURM_JOB_GPUS: $SLURM_JOB_GPUS
 
+# TODO edit the following three lines based on your nodename and $CRYOSPARC_SKEL directory and your .sif image
 nodename=${HOSTNAME}.cluster
-# TODO edit the following two lines based on your $CRYOSPARC_SKEL directory and your .sif image
 CRYOSPARC_SKEL=/sw/cryosparc/skel
 singularity_image="cryosparc_standalone_ubuntu-20.04-06092022.sif"
 
