@@ -110,7 +110,7 @@ singularity exec -B $SCRATCH/.cryosparc_ood/cryosparc_master/run:/cryosparc_mast
     --port 39000 \
     $usegpu \
     --lane default \
-    --newlane \
+    --newlane
 
 # can use the following if $TMPDIR is big enough; some jobs require 5TB for cache
 #    --ssdpath $TMPDIR
