@@ -1,6 +1,5 @@
 <%
 app_name = "cryosparc"
-app_root = "/var/www/ood/apps/dev/myusername/gateway"+"/"+app_name
 %>
 ---
 cluster: grace
@@ -51,12 +50,22 @@ attributes:
     widget: "text_field"
     help: "Leave blank unless you know what you are doing"
 
+  ssd_path:
+    widget: select
+    label: "SSD cache directory"
+    options:
+      - [ "1.4TB compute node SSD", "0" ]
+      - [ "Use 95% of your available $SCRATCH up to 5TB", "1" ]
+    help: |
+      - Files on the 1.4TB compute node SSD do not count against your quota
+
 form:
   - bc_vnc_idle
   - bc_num_slots
   - cryosparc_license_id
   - node_type
   - group_dir
+  - ssd_path
   - bc_num_hours
   - bc_num_cores
   - bc_amt_mem

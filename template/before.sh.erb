@@ -39,3 +39,5 @@ password="$(create_passwd 16)"
 #export PASSWORD="$(echo -n "${password}${SALT}" | openssl dgst -sha1 | awk '{print $NF}')"
 export PASSWORD=${password}
 export SINGULARITYENV_PASSWORD=${password}
+export SINGULARITYENV_http_proxy=10.73.132.63:8080
+export SINGULARITYENV_https_proxy=10.73.132.63:8080
