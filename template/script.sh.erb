@@ -103,7 +103,7 @@ set -x
 #                  [--rams RAMS] [--cpus CPUS] [--monitor_port MONITOR_PORT]
 
 # create symlink from $TMPDIR to /tmp within the image since $TMPDIR full path is used in some parts
-singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
+singularity exec --nv -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_database:/cryosparc_database \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_cache:/cryosparc_cache \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_license:/cryosparc_license \
@@ -111,7 +111,7 @@ singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_mas
   /sw/hprc/sw/ood/apps/cryosparc/$singularity_image ln -s /tmp /tmp/job.$SLURM_JOBID
 
 # start cryosparc
-singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
+singularity exec --nv -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_database:/cryosparc_database \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_cache:/cryosparc_cache \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_license:/cryosparc_license \
@@ -130,7 +130,7 @@ fi
 sleep 180
 
 # clear previous worker nodes
-singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
+singularity exec --nv -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_database:/cryosparc_database \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_cache:/cryosparc_cache \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_license:/cryosparc_license \
@@ -138,7 +138,7 @@ singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_mas
   /sw/hprc/sw/ood/apps/cryosparc/$singularity_image /opt/remove_hosts.sh
 
 # connect current compute node
-singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
+singularity exec --nv -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_database:/cryosparc_database \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_cache:/cryosparc_cache \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_license:/cryosparc_license \
@@ -153,7 +153,7 @@ singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_mas
     $usegpu
 
 # update worker node with ssdquota since it doesn't work with the first connection command
-singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
+singularity exec --nv -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_database:/cryosparc_database \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_cache:/cryosparc_cache \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_license:/cryosparc_license \
@@ -164,7 +164,7 @@ singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_mas
     --update --ssdquota $ssdquota
 
 # display cryosparc environment variables
-singularity exec -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
+singularity exec --nv -B $SCRATCH/.cryosparc_hprc/cryosparc_master/run:/cryosparc_master/run \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_database:/cryosparc_database \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_cache:/cryosparc_cache \
   -B $SCRATCH/.cryosparc_hprc/cryosparc_license:/cryosparc_license \
