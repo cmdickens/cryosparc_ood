@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# TODO use your proxy address if compute nodes do not have internet access which is needed to validate license
 proxy="http://10.73.132.63:8080/"
 export SINGULARITYENV_http_proxy=$proxy
 export SINGULARITYENV_https_proxy=$proxy
@@ -10,6 +11,7 @@ export SINGULARITYENV_CRYOSPARC_HOSTNAME_CHECK="localhost"
 
 export HOSTNAME=${HOSTNAME}.cluster
 nodename=$(hostname)
+# assign a value to clustername if you do not have a command called clustername to return the name of the current cluster
 clustername=$(clustername)
 
 singularity_image='/sw/hprc/sw/cryoSPARC/images/cryosparc_<%= context.version %>.sif'
@@ -19,6 +21,7 @@ user_cryosparc_directory="$SCRATCH/.cryosparc_${clustername}-<%= context.version
 module purge
 echo JOBID: $SLURM_JOBID
 
+# validate the format of the license_id
 if [[ $(echo <%= context.cryosparc_license_id %> | grep -c '[[:alnum:]]\{8\}-[[:alnum:]]\{4\}-[[:alnum:]]\{4\}-[[:alnum:]]\{4\}-[[:alnum:]]\{12\}') == 1 ]]; then
  echo "License format correct"
 else
@@ -108,7 +111,6 @@ echo "=== Starting up cryoSPARC"
 set -x
 
 ## nvidia-smi --query-gpu=pci.bus --format=csv
-#ACES
 # NVIDIA H100 PCIe
 #0x0A
 #0xAE
@@ -131,8 +133,9 @@ echo "=== num_gpus: [<%= context.num_gpus %>]"
   echo CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES
   echo SLURM_JOB_GPUS: $SLURM_JOB_GPUS
   echo "=== gpu_bus: $gpu_bus"
+  # this next section is used so that two or more users can launch cryosparc OOD jobs on the same node, each using a GPU
   gpu_bus=$(nvidia-smi --query-gpu=pci.bus --format=csv | tail -n 1)
-  # use port 40000 if only one GPU is selected and job lands on second GPU
+  # update pci.bus values based on your system and add/remove cryo_ports as needed
   if [[ "$gpu_bus" == *0x3B* ]]; then
       cryo_port=39100
   elif [[ "$gpu_bus" == *0xD8* ]]; then
@@ -273,7 +276,7 @@ singularity exec $nvidia -B $user_cryosparc_directory/cryosparc_master/run:/cryo
 jobstats -a &
 
 #TODO # pass port to view.html.erb if not using firefox --kiosk localhost:$cryo_port
-# start a terminal only to keep the session alive if not using firefox --kiosk
+# start a terminal only to keep the session alive if not using firefox
 #xterm
 
 module load Firefox
