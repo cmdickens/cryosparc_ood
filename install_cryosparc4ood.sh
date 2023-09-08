@@ -102,6 +102,8 @@ chmod +x /cryosparc_master/bin/remove_hosts.sh
 
 # edit config.sh
 sed -i 's,export CRYOSPARC_LICENSE_ID=.\+,export CRYOSPARC_LICENSE_ID=$(cat /cryosparc_license/license_id),' /cryosparc_master/config.sh
+sed -i 's,export CRYOSPARC_LICENSE_ID=.\+,export CRYOSPARC_LICENSE_ID=$(cat /cryosparc_license/license_id),' /cryosparc_worker/config.sh
+
 sed -i 's,export CRYOSPARC_MASTER_HOSTNAME=.\+,,' /cryosparc_master/config.sh
 sed -i 's,source config.sh,source /cryosparc_master/config.sh,' /cryosparc_master/bin/cryosparcm
 
