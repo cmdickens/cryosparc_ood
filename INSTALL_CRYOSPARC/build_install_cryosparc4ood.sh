@@ -37,7 +37,7 @@ function help {
     echo "    Example command:"
     echo "          srun --nodes=1 --time=7-00:00:00 --ntasks-per-node=1 --cpus-per-task=48 --mem=360G  --pty bash"
     echo
-    echo "          ./build_install_cryosparc4ood.sh -l c0f49280-8faa-11ec-b3ab-93c5d5562c91 -t America/Chicago -v 4.3.1"
+    echo "          ./build_install_cryosparc4ood.sh -l LICENSE_ID -t America/Chicago -v 4.3.1"
     echo
     echo "    Files:"
     echo "        Need a directory named src with the master and worker files (not symlinks)"
