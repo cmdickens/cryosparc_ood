@@ -37,7 +37,7 @@ function help {
     echo "    Example command:"
     echo "          srun --nodes=1 --time=7-00:00:00 --ntasks-per-node=1 --cpus-per-task=48 --mem=360G  --pty bash"
     echo
-    echo "          ./build_install_cryosparc4ood.sh -l LICENSE_ID -t America/Chicago -v 4.3.1"
+    echo "          ./build_install_cryosparc4ood.sh -l $LICENSE_ID -t America/Chicago -v 4.3.1"
     echo
     echo "    Files:"
     echo "        Need a directory named src with the master and worker files (not symlinks)"
@@ -148,6 +148,7 @@ chmod +x /cryosparc_master/bin/remove_hosts.sh
 
 # edit config.sh
 sed -i 's,export CRYOSPARC_LICENSE_ID=.\+,export CRYOSPARC_LICENSE_ID=\$(cat /cryosparc_license/license_id),' /cryosparc_master/config.sh
+sed -i 's,export CRYOSPARC_LICENSE_ID=.\+,export CRYOSPARC_LICENSE_ID=\$(cat /cryosparc_license/license_id),' /cryosparc_worker/config.sh
 sed -i 's,export CRYOSPARC_MASTER_HOSTNAME=.\+,,' /cryosparc_master/config.sh
 sed -i 's,source config.sh,source /cryosparc_master/config.sh,' /cryosparc_master/bin/cryosparcm
 
@@ -216,7 +217,8 @@ cat >> cryosparc4ood.def <<EOF
 
   # install other import packages
   apt-get install -y software-properties-common wget curl less jq iputils-ping
-  apt-get install -y nvidia-driver-545 nvidia-dkms-545
+  #apt-get install -y nvidia-driver-545 nvidia-dkms-545
+  apt-get install -y nvidia-driver-550 nvidia-dkms-550
 
   ### gcc compiler is required for development using the cuda toolkit. to verify the version of gcc install enter
   gcc --version
@@ -230,7 +232,7 @@ cat >> cryosparc4ood.def <<EOF
 EOF
 
 if [[ $http_proxy ]]; then
-SINGULARITYENV_http_proxy=$http_proxy SINGULARITYENV_https_proxy=$http_proxy SINGULARITY_CACHEDIR=$TMPDIR SREGISTRY_DATABASE=$TMPDIR SINGULARITYENV_license_id=$license_id SINGULARITYENV_time_zone=$time_zone SINGULARITYENV_cryosparc_version=$cryosparc_version SINGULARITYENV_no_proxy="localhost,127.0.0.0/8" singularity build --nv --fakeroot -B $PWD/src/:/mnt cryosparc-${clustername}-${cryosparc_version}.sif  cryosparc4ood.def
+SINGULARITYENV_http_proxy=$http_proxy SINGULARITYENV_https_proxy=$http_proxy SINGULARITY_CACHEDIR=$TMPDIR SREGISTRY_DATABASE=$TMPDIR SINGULARITYENV_license_id=$license_id SINGULARITYENV_time_zone=$time_zone SINGULARITYENV_cryosparc_version=$cryosparc_version SINGULARITYENV_no_proxy="localhost,127.0.0.0/8" singularity build --nv --fakeroot -B $PWD/src/:/mnt cryosparc-${cryosparc_version}.sif  cryosparc4ood.def
 else
-SINGULARITY_CACHEDIR=$TMPDIR SREGISTRY_DATABASE=$TMPDIR SINGULARITYENV_license_id=$license_id SINGULARITYENV_time_zone=$time_zone SINGULARITYENV_cryosparc_version=$cryosparc_version SINGULARITYENV_no_proxy="localhost,127.0.0.0/8" singularity build --nv --fakeroot -B $PWD/src/:/mnt cryosparc-${clustername}-${cryosparc_version}.sif  cryosparc4ood.def
+SINGULARITY_CACHEDIR=$TMPDIR SREGISTRY_DATABASE=$TMPDIR SINGULARITYENV_license_id=$license_id SINGULARITYENV_time_zone=$time_zone SINGULARITYENV_cryosparc_version=$cryosparc_version SINGULARITYENV_no_proxy="localhost,127.0.0.0/8" singularity build --nv --fakeroot -B $PWD/src/:/mnt cryosparc-${cryosparc_version}.sif  cryosparc4ood.def
 fi
