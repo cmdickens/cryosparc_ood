@@ -1,18 +1,50 @@
 #!/usr/bin/env bash
 
+#
+# Launch Fluxbox
+#
+
+# Create Fluxbox root or it will override the below init file
+(
+  umask 077
+  mkdir -p "${HOME}/.fluxbox"
+)
+
+# Export the module function for the terminal
+[[ $(type -t module) == "function" ]] && export -f module
+
+# Start the Fluxbox window manager (it likes to crash on occasion, make it
+# persistent)
+(
+  until fluxbox -display "${DISPLAY}.0" -rc "<%= session.staged_root.join("fluxbox.rc") %>"; do
+    echo "Fluxbox crashed with exit code $?. Respawning..." >&2
+    sleep 1
+  done
+) &
+
+# TODO edit the following to your cluster proxy
+proxy="http://10.73.132.64:8080/"
+export SINGULARITYENV_http_proxy=$proxy
+export SINGULARITYENV_https_proxy=$proxy
+export SINGULARITYENV_MPLCONFIGDIR="$TMPDIR"
+export SINGULARITYENV_CRYOSPARC_LICENSE_ID=<%= context.cryosparc_license_id %>
+export SINGULARITYENV_CRYOSPARC_MASTER_HOSTNAME="localhost"
+export SINGULARITYENV_CRYOSPARC_HOSTNAME_CHECK="localhost"
+export SINGULARITYENV_CRYOSPARC_HEARTBEAT_SECONDS=600
+
+export HOSTNAME=${HOSTNAME}.cluster
+nodename=$(hostname)
+clustername=$(clustername)
+
+# TODO edit the following to your cryosparc singularity image path
+singularity_image='/sw/hprc/sw/cryoSPARC/images/cryosparc-<%= context.version %>_grace.sif'
+# database and log files are saved in .cryosparc_CLUSTERNAME-4.7/ since not sure if minor version updgrade will affect database
+user_cryosparc_directory="$SCRATCH/.cryosparc_${clustername}-<%= context.version.rpartition('.')[0..1].join.chop %>"
+
 module purge
+echo SLURM_JOB_ID: $SLURM_JOB_ID
 
-# for debugging
-echo JOBID: $SLURM_JOBID
-echo CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES
-echo SLURM_JOB_GPUS: $SLURM_JOB_GPUS
-
-# TODO edit the following three lines based on your nodename and $CRYOSPARC_SKEL directory and your .sif image
-nodename=${HOSTNAME}.cluster
-CRYOSPARC_SKEL=/sw/cryosparc/skel
-singularity_image="cryosparc_standalone_ubuntu-20.04-06092022.sif"
-
-# validate license id matches format
+# perform a simple license format validation
 if [[ $(echo <%= context.cryosparc_license_id %> | grep -c '[[:alnum:]]\{8\}-[[:alnum:]]\{4\}-[[:alnum:]]\{4\}-[[:alnum:]]\{4\}-[[:alnum:]]\{12\}') == 1 ]]; then
  echo "License format correct"
 else
@@ -20,21 +52,25 @@ else
  scancel $SLURM_JOBID
 fi
 
-# check if directory $SCRATCH/.cryosparc_ood/cryosparc_license exists 
-if [ ! -d "$SCRATCH/.cryosparc_ood/cryosparc_license" ]; then
-    mkdir -p "$SCRATCH/.cryosparc_ood/cryosparc_license"
+if [ ! -d "$user_cryosparc_directory/cryosparc_license" ]; then
+    mkdir -p "$user_cryosparc_directory/cryosparc_license"
 fi
 
-echo <%= context.cryosparc_license_id %> > $SCRATCH/.cryosparc_ood/cryosparc_license/license_id
+echo <%= context.cryosparc_license_id %> > $user_cryosparc_directory/cryosparc_license/license_id
 
-# check if directory $SCRATCH/.cryosparc_ood/.cryosparc_database exists
-if [ ! -d "$SCRATCH/.cryosparc_ood/cryosparc_database" ]; then
-    tar xzf $CRYOSPARC_SKEL/cryosparc_database.tar.gz -C $SCRATCH/.cryosparc_ood/
+# check if directory $user_cryosparc_directory/.cryosparc_database exists
+if [ ! -d "$user_cryosparc_directory/cryosparc_database" ]; then
+    singularity exec $singularity_image tar xzf /cryosparc_database_init_files-<%= context.version %>.tar.gz -C $user_cryosparc_directory
 fi
 
-# check if directory $SCRATCH/.cryosparc_ood/.cryosparc_master exists
-if [ ! -d "$SCRATCH/.cryosparc_ood/cryosparc_master" ]; then
-    tar xzf $CRYOSPARC_SKEL/cryosparc_master-run.tar.gz -C $SCRATCH/.cryosparc_ood/
+# check if directory $user_cryosparc_directory/.cryosparc_master exists
+if [ ! -d "$user_cryosparc_directory/cryosparc_master" ]; then
+    singularity exec $singularity_image tar xzf /cryosparc_master-run_init_files-<%= context.version %>.tar.gz -C $user_cryosparc_directory
+fi
+
+# create directory $user_cryosparc_directory/.cryosparc_cache if it doesn't exist
+if [ ! -d "$user_cryosparc_directory/cryosparc_cache" ]; then
+    mkdir -p "$user_cryosparc_directory/cryosparc_cache"
 fi
 
 # bind group directory if provided in form and if exists
@@ -57,31 +93,114 @@ fi
     fi
 <%- end -%>
 
-<%- if context.node_type =~ /CPU/ -%>
-  usegpu="--nogpu"
-  <%- else -%>
-  usegpu="--gpus $CUDA_VISIBLE_DEVICES"
-<%- end -%>
+# this block was used for development
+# set ssdpath and ssdquota based on user selection for ssd_path checkbox in form.yml.erb
+#< %- if context.ssd_path.to_i != 0 -%>
+#    if [ ! -d "$user_cryosparc_directory/cache" ]; then
+#        mkdir -p "$user_cryosparc_directory/cache"
+#    fi
+#    ssdpath="$user_cryosparc_directory/cache"
+#
+#    # get 95% of current $SCRATCH quota
+#    read -r used_quota max_quota <<< $(showquota | grep ^/scratch/user/$USER | tr -s " " | cut -f 2,3 -d " " | sed 's/T//g')
+#    ssdquota=$( bc <<< "($max_quota - $used_quota) * 0.95 * 100000")
+#    ssdquota=${ssdquota/.00}
+#< %- else -%>
+    ssdpath="$TMPDIR"
+    # use 1/2 $TMPDIR size if 1 of 2 gpus used
+    # use 1/4 $TMPDIR size if 1 of 4 gpus used
+    <%- if context.node_type =~ /(a100|rtx)/ -%>
+        ssdquota=$((700000 * <%= context.num_gpus %>))
+    <%- elsif context.node_type =~ /a40/ -%>
+        ssdquota=$((350000 * <%= context.num_gpus %>))
+    <%- elsif context.node_type =~ /t4/ -%>
+        ssdquota=$((350000 * <%= context.num_gpus %>))
+    <%- else -%>
+        ssdquota='1400000'
+    <%- end -%>
+#< %- end -%>
+
+# use a max of 5TB for quota
+quotamax=5000000
+if [ $ssdquota -gt $quotamax ]; then
+    echo "quota will use the max of 5TB"
+    ssdquota=$quotamax
+fi
+
+echo "=== Using ssdpath: $ssdpath"
+echo "=== Using ssdquota (MB): $ssdquota"
 
 # Start cryoSPARC Server
-echo "Starting up cryoSPARC"
+echo "=== Starting up cryoSPARC"
 set -x
 
+echo "=== num_gpus: [<%= context.num_gpus %>]"
+<%- if context.node_type.eql? "CPU" -%>
+    # select a random number between 39500 and 39990; GPU jobs will be in the 39010 - 39400
+    cryo_port=39$(shuf -i 500-990 -n 1)
+    usegpu="--nogpu"
+    echo "=== CPU node type selected; no GPUs will be available"
+<%- else -%>
+  nvidia-smi
+  nvidia='--nv'
+  usegpu="--gpus $CUDA_VISIBLE_DEVICES"
+  echo CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES
+  echo SLURM_JOB_GPUS: $SLURM_JOB_GPUS
+  echo "=== gpu_bus: $gpu_bus"
+
+  # use SLURM_STEP_GPUS to assign a port number so GPU jobs will not on the same node will have different ports
+  first_slurm_job_gpus=${SLURM_STEP_GPUS%%,*}
+  echo "=== first_slurm_job_gpus: $first_slurm_job_gpus"
+  cryo_port=39$(( 10 * <%= context.num_gpus %> ))0
+<%- end -%>
+
+echo "using new cryo_port bash = $cryo_port"
+
+# update CRYOSPARC_BASE_PORT so that multiple users can use GPUs on the same compute node each using a different port
+sed -i "s,CRYOSPARC_BASE_PORT=.\+,CRYOSPARC_BASE_PORT=$cryo_port,;s,_proxy=.\+,_proxy=\"$proxy\",;s|no_proxy=.\+|no_proxy=\"localhost,127.0.0.0/8\"|" $user_cryosparc_directory/cryosparc_master/run/config.sh
+
+# define the base command used to run cryosparcm commands
+cryosparc_singularity_command="singularity exec $nvidia -B $user_cryosparc_directory/cryosparc_master/run:/cryosparc_master/run \
+  -B $user_cryosparc_directory/cryosparc_database:/cryosparc_database \
+  -B $user_cryosparc_directory/cryosparc_cache:/cryosparc_cache \
+  -B $user_cryosparc_directory/cryosparc_license:/cryosparc_license \
+  -B $TMPDIR:/tmp $group_dir \
+  $singularity_image "
+
 # create symlink from $TMPDIR to /tmp within the image since $TMPDIR full path is used in some parts
-singularity exec -B $SCRATCH/.cryosparc_ood/cryosparc_master/run:/cryosparc_master/run \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_database:/cryosparc_database \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_license:/cryosparc_license \
-  -B $TMPDIR:/tmp $group_dir \
-  $CRYOSPARC_SKEL/$singularity_image ln -s /tmp /tmp/job.$SLURM_JOBID
+$cryosparc_singularity_command ln -s /tmp /tmp/job.$SLURM_JOBID
 
-# start cryosparc
-singularity exec -B $SCRATCH/.cryosparc_ood/cryosparc_master/run:/cryosparc_master/run \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_database:/cryosparc_database \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_license:/cryosparc_license \
-  -B $TMPDIR:/tmp $group_dir \
-  $CRYOSPARC_SKEL/$singularity_image cryosparcm start
+$cryosparc_singularity_command cryosparcm start database
+sleep 30
+$cryosparc_singularity_command cryosparcm checkdb
+$cryosparc_singularity_command cryosparcm fixdbport
+$cryosparc_singularity_command cryosparcm stop
+$cryosparc_singularity_command cryosparcm start
+$cryosparc_singularity_command cryosparcm checkdb
 
-# scancel job if cryosparc is already running in another job since it will fail to start
+# clear previous worker nodes
+$cryosparc_singularity_command remove_hosts.sh
+
+# connect current compute node
+$cryosparc_singularity_command cryosparcw connect \
+    --worker localhost \
+    --master localhost \
+    --port $cryo_port \
+    --ssdpath $ssdpath \
+    --cpus $SLURM_NTASKS_PER_NODE \
+    --lane default \
+    --newlane \
+    $usegpu
+
+# update worker node with ssdquota since it doesn't work with the first connection command
+$cryosparc_singularity_command cryosparcw connect \
+    --cpus $SLURM_NTASKS_PER_NODE \
+    --port $cryo_port \
+    --worker localhost \
+    --master localhost \
+    --update --ssdquota $ssdquota
+
+# scancel current job if cryosparc is already running in another job since it will fail to start since the db recognizes it is already running
 if [ $? != "0" ]; then
    echo "=== cryosparcm start failed. Is cryoSPARC currently running in another job?"
    squeue -u $USER
@@ -89,38 +208,12 @@ if [ $? != "0" ]; then
    exit
 fi
 
-# allow cryosparc time to start
-sleep 180
-
-# clear previous worker nodes
-singularity exec -B $SCRATCH/.cryosparc_ood/cryosparc_master/run:/cryosparc_master/run \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_database:/cryosparc_database \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_license:/cryosparc_license \
-  -B $TMPDIR:/tmp $group_dir \
-  $CRYOSPARC_SKEL/$singularity_image /opt/remove_hosts.sh
-
-# connect current compute node
-singularity exec -B $SCRATCH/.cryosparc_ood/cryosparc_master/run:/cryosparc_master/run \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_database:/cryosparc_database \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_license:/cryosparc_license \
-  -B $TMPDIR:/tmp $group_dir \
-  $CRYOSPARC_SKEL/$singularity_image cryosparcw connect \
-    --worker $nodename \
-    --master $nodename \
-    --port 39000 \
-    $usegpu \
-    --lane default \
-    --newlane
-
-# can use the following if $TMPDIR is big enough; some jobs require 5TB for cache
-#    --ssdpath $TMPDIR
-
 # display cryosparc environment variables
-singularity exec -B $SCRATCH/.cryosparc_ood/cryosparc_master/run:/cryosparc_master/run \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_database:/cryosparc_database \
-  -B $SCRATCH/.cryosparc_ood/cryosparc_license:/cryosparc_license \
-  -B $TMPDIR:/tmp $group_dir \
-  $CRYOSPARC_SKEL/$singularity_image cryosparcm env
+$cryosparc_singularity_command cryosparcm env
 
-# start a terminal only to keep the session alive
-xterm
+# run job stats using -a since using ood app; -a will recreate the usage graphs every 2 minutes
+jobstats -a &
+
+module load Firefox
+firefox --private-window localhost:$cryo_port
+

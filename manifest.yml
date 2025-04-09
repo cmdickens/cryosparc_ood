@@ -1,8 +1,8 @@
 ---
-name: cryoSPARC
+name: cryoSPARC 4.7.0
 category: Interactive Apps
-subcategory: Servers
+subcategory: Imaging
 role: batch_connect
 description: |
-  This app will launch cryoSPARC and cryoSPARC Live on one compute node
+  This app will launch CryoSPARC 4.7.0 on one compute node
 

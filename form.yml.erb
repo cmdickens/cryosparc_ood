@@ -1,64 +1,123 @@
-<%
-app_name = "cryosparc"
-app_root = "/var/www/ood/apps/dev/myusername/gateway"+"/"+app_name
-%>
 ---
 cluster: grace
-title:   cryoSPARC
+title:   CryoSPARC 4.7.0
 
 attributes:
   bc_vnc_idle: 0
-  bc_num_slots: 1
-  bc_num_hours: 
-    widget: "number_field"
-    label: "Number of Hours"
-    value: 1
-    min: 1
-    max: 96 
-    step: 1
-    help: "Make sure you select enough hours to cover your processing time. Max walltime for GPU queue is 96 hrs."
-  bc_num_cores: 48
-  bc_amt_mem: 360
-  bc_account:
-    label: "Slurm account (optional)"
-    help: "This field is needed ONLY IF you want to use a different account other than your default account. Leave it blank if you don't know what to provide."
-
+  version:
+    widget: select
+    label: "Version"
+    options:
+      - [ "4.7.0" ]
   cryosparc_license_id:
     required: true
-    widget: "text_field"
-    label:  "cryoSPARC license id (required)"
+    widget: password_field
+    label:  "CryoSPARC license id (required)"
     value:  ""
     help: |
-      - You must get an individual license id from <a href='https://cryosparc.com/download' target='_blank'>cryosparc.com</a>
-      - After you click the blue Launch button below, the instructions for connecting to cryoSPARC will be displayed on the next page once the cryoSPARC startup is complete which can take up to 5 minutes
-      - You can only launch one cryoSPARC portal app job but you can run multiple computational jobs within cryoSPARC
+      - You must get an individual license id from <a href='https://cryosparc.com/download' target='_blank'>cryosparc.com/download</a>
+      - After you click the blue Launch button below, it may take up to 5 minutes before CryoSPARC is available
+      - Use the following to login to your CryoSPARC session:
+       - username: **admin&commat;cryo.edu**
+       - password: **admin**
+      - You can only launch one CryoSPARC portal app job but you can run multiple computational jobs within CryoSPARC
+  cpu_num_hours:
+    widget: 'number_field'
+    label: "Number of hours (max 168)"
+    value: 1
+    min: 1
+    max: 168
+  gpu_num_hours:
+    widget: 'number_field'
+    label: "Number of hours (max 48)"
+    value: 1
+    min: 1
+    max: 96
+  total_memory:
+    widget: "number_field"
+    value: "7"
+    min: "7"
+    max: "360"
+    label: "Total GB memory (max 360)"
   node_type:
-    widget: select
-    label: "GPU type and count"
+    widget: "select"
+    label: "Node type"
     options:
-      - [ "A100 x 2", "A100" ]
-      - [ "RTX 6000 x 2", "RTX" ]
-      - [ "T4 x 4", "T4" ]
-      - [ "CPU only", "CPUall" ]
+      - [
+            "CPU only", "CPU",
+           data-hide-num-gpus: true,
+           data-hide-gpu-num-hours: true,
+           data-hide-ssd-cache-size: true,
+        ]
+# RTX 6000 causes cryosparc errors on some tasks
+      - [
+            "A100 GPU", "a100",
+           data-set-ssd-cache-size: 700,
+           data-max-num-gpus: 2,
+           data-hide-cpu-num-hours: true,
+        ]
+      - [
+            "A40 GPU", "a40",
+           data-set-ssd-cache-size: 350,
+           data-max-num-gpus: 3,
+           data-hide-cpu-num-hours: true,
+        ]
+      - [
+            "T4 GPU", "t4",
+           data-set-ssd-cache-size: 350,
+           data-max-num-gpus: 4,
+           data-hide-cpu-num-hours: true,
+        ]
     help: |
-      - All options have 48 cores and 360GB memory for CPU processes
-      - There are 100 x A100, 9 x RTX 6000 and 8 x T4 GPU nodes available on Grace.<br>
-      - Each A100 and RTX 6000 GPU has 40GB memory and each T4 GPU has 16GB.
-      - Queue times can be long if the cluster is busy especially for GPU nodes.
-
+        - Launch using CPU first, login and wait a few minutes to initialize your database.
+        - Afterwards, you can launch with GPU(s) which will become an available Node type
+  num_gpus:
+    widget: 'number_field'
+    label: "Number of GPUs"
+    value: 1
+    min: 1
+    max: 2
+    help: |
+      - Run the **gpuavail** command on the terminal (Clusters -> _grace Shell Access) to see the current GPU configuration and availability
   group_dir:
     label: "Optional group directory to mount"
     widget: "text_field"
-    help: "Leave blank unless you know what you are doing"
+    help: |
+      - You must already be a member of the group
+      - Example values:
+          - /junjiez
+          - /scratch/group/davislab
+  ssd_cache_size:
+    label: "SSD cache size in GB per GPU (automatically set)"
+    readonly: true
+    value: 350
+    min: 350
+    max: 700
+  ssd_path:
+    widget: select
+    label: "SSD cache directory"
+    options:
+      - [ "1.4TB compute node SSD", "0" ]
+    help: |
+      - For A100 and RTX 6000 GPUs, 700GB per GPU count will be allocated for the SSD cache space.
+      - For T4 GPUs, 350GB per GPU count will be allocated for the SSD cache space.
+      - Cache files on the SSD do not count against your quota.
+
+  bc_account:
+    label: "Slurm account (optional)"
+    help: "This field is needed ONLY IF you want to use a different account other than your default account. Leave it blank if you don't know what to provide."
+  email:
+    help: "This field is optional."
 
 form:
   - bc_vnc_idle
-  - bc_num_slots
+  - version
   - cryosparc_license_id
-  - node_type
   - group_dir
-  - bc_num_hours
-  - bc_num_cores
-  - bc_amt_mem
-  - bc_email_on_started
+  - cpu_num_hours
+  - gpu_num_hours
+  - node_type
+  - num_gpus
+  - ssd_cache_size
+  - email
   - bc_account
